@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+"""
+Usage: nbsplit notebook.ipynb [other_notebooks.ipynb]
+
+Script for splitting IPython notebooks based on heading level 1 cells.
+
+Just add heading 1 wherever you want your notebook to be split.
+
+Author: Min RK (@minrk)
+License: Public Domain
+"""
+
+import io
+import os
+import sys
+
+from IPython.nbformat import current
+
+def split_notebook(notebook_name):
+    print("reading %s" % notebook_name)
+    with io.open(notebook_name, encoding='utf-8') as f:
+        nb = current.read(f, 'json')
+    
+    ws = nb['worksheets'][0]
+    original_cells = ws['cells']
+    h1 = []
+    for idx, cell in enumerate(original_cells):
+        if cell['cell_type'] == 'heading' and cell['level'] == 1:
+            h1.append(idx)
+    
+    if h1 and h1[0] != 0:
+        h1.insert(0, 0)
+    h1.append(len(original_cells))
+    
+    base_name, ext = os.path.splitext(notebook_name)
+    print("splitting %s into %s notebooks" % (notebook_name, len(h1)-1))
+    
+    for count, lower, upper in zip(range(1, len(h1)), h1[:-1], h1[1:]):
+        ws['cells'] = original_cells[lower:upper]
+        fname = "%s_%i%s" % (base_name, count, ext)
+        print("writing cells [%i,%i) to %s" % (lower, upper, fname))
+        with io.open(fname, 'w', encoding='utf-8') as f:
+            current.write(nb, f, 'json')
+
+if __name__ == '__main__':
+    for notebook_name in sys.argv[1:]:
+        split_notebook(notebook_name)
+
+        

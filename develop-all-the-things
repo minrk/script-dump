@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+gh="https://github.com/"
+
+repos="
+ipython/traitlets
+ipython/ipython
+jupyter/jupyter_core
+jupyter/jupyter_client
+ipython/ipykernel
+ipython/ipyparallel
+jupyter/jupyter_console
+jupyter/qtconsole
+jupyter/nbformat
+jupyter/nbconvert
+jupyter/notebook
+"
+
+test -d ipython || mkdir ipython
+test -d jupyter || mkdir jupyter
+
+base=$PWD
+
+for repo in $repos; do
+  cd $base
+  test -d $repo || git clone $gh/$repo $repo
+  cd $repo
+  git pull
+  pip install -e .
+done
